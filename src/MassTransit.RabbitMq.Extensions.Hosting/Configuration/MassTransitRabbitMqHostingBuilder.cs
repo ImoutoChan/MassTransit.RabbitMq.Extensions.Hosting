@@ -80,15 +80,24 @@ namespace MassTransit.RabbitMq.Extensions.Hosting.Configuration
         /// <param name="queueName">Name of the queue.</param>
         /// <param name="retry">The optional retry configurator action.</param>
         /// <param name="receiveEndpointConfigurator">The optional endpoint configurator action.</param>
+        /// <param name="consumerFactory">The optional factory for producing customers.</param>
         /// <returns></returns>
         public IMassTransitRabbitMqHostingBuilder Consume<TConsumer, TMessage>(
-            string queueName, 
+            string queueName,
             Action<IRetryConfigurator> retry = null,
-            Action<IRabbitMqReceiveEndpointConfigurator> receiveEndpointConfigurator = null)
+            Action<IRabbitMqReceiveEndpointConfigurator> receiveEndpointConfigurator = null,
+            Func<IServiceProvider, TConsumer> consumerFactory = null)
             where TConsumer : class, IConsumer<TMessage>
             where TMessage : class
         {
-            Services.TryAddTransient<TConsumer>();
+            if (consumerFactory != null)
+            {
+                Services.TryAddTransient<TConsumer>(consumerFactory);
+            }
+            else
+            {
+                Services.TryAddTransient<TConsumer>();
+            }
 
             ReceiverConfiguration config;
             if (_receivers.ContainsKey(queueName))
